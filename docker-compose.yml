@@ -1,0 +1,24 @@
+version: "2"
+services:
+    instance:
+        image:  node:8
+        ports: 
+            - "3334:3334"
+        volumes:
+            - ./nile-local-instance:/usr/src/app
+        working_dir: /usr/src/app
+        command: bash -c "npm install && echo '~~~~~~~~~~~~~ npm install completed!!! ~~~~~~~~~~~~' && npm start"
+    node:
+        image: duluca/minimal-node-web-server
+        working_dir: /usr/src/app
+        ports: 
+            - "8010:3000"
+        volumes:
+            - ./nile-node/dist:/usr/src/app/public
+    client:
+        image: duluca/minimal-node-web-server
+        working_dir: /usr/src/app
+        ports: 
+            - "8011:3000"
+        volumes:
+            - ./nile-client/dist:/usr/src/app/public
