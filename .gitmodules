@@ -1,3 +1,6 @@
 [submodule "nile-local-instance"]
 	path = nile-local-instance
 	url = https://github.com/nileorg/nile-local-instance
+[submodule "nile-node"]
+	path = nile-node
+	url = https://github.com/nileorg/nile-node
