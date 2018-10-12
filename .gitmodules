@@ -4,3 +4,6 @@
 [submodule "nile-node"]
 	path = nile-node
 	url = https://github.com/nileorg/nile-node
+[submodule "nile-client"]
+	path = nile-client
+	url = https://github.com/nileorg/nile-client
