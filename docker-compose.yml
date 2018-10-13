@@ -7,7 +7,7 @@ services:
         volumes:
             - ./nile-local-instance:/usr/src/app
         working_dir: /usr/src/app
-        command: bash -c "npm install && echo '~~~~~~~~~~~~~ npm install completed!!! ~~~~~~~~~~~~' && npm start"
+        command: bash -c "rm ./.git && npm install && echo '~~~~~~~~~~~~~ npm install completed!!! ~~~~~~~~~~~~' && npm start"
     node:
         image: duluca/minimal-node-web-server
         working_dir: /usr/src/app
