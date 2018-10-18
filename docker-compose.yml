@@ -1,13 +1,13 @@
 version: "2"
 services:
     instance:
-        image:  node:8
+        build: ./nile-local-instance/
         ports: 
             - "3334:3334"
         volumes:
             - ./nile-local-instance:/usr/src/app
         working_dir: /usr/src/app
-        command: bash -c "[ -f ./.git ] && rm ./.git ; npm install && echo '~~~~~~~~~~~~~ npm install completed!!! ~~~~~~~~~~~~' && npm start"
+        command: bash -c "npm link ipfs randomstring socket.io sqlite3 && npm start"
     node:
         image: duluca/minimal-node-web-server
         working_dir: /usr/src/app
