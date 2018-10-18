@@ -19,6 +19,9 @@ git clone git@github.com:nileorg/nile-prototype.git
 
 ### Init the submodules
 ```
+git submodule init
+```
+```
 git submodule update
 ```
 
