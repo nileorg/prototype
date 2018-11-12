@@ -1,6 +1,6 @@
 [submodule "nile-local-instance"]
 	path = nile-local-instance
-	url = git@github.com:nileorg/nile-local-instance.git
+	url = git@github.com:nileorg/nile-local-instance-prototype.git
 [submodule "nile-node"]
 	path = nile-node
 	url = git@github.com:nileorg/nile-node.git
