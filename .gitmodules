@@ -4,6 +4,3 @@
 [submodule "nile-node"]
 	path = nile-node
 	url = git@github.com:nileorg/nile-node.git
-[submodule "nile-client"]
-	path = nile-client
-	url = git@github.com:nileorg/nile-client.git
