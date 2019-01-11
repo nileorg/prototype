@@ -1,3 +1,0 @@
-[submodule "nile-node"]
-	path = nile-node
-	url = git@github.com:nileorg/nile-node.git
