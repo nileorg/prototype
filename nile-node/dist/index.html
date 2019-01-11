@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<link rel="stylesheet" href="./bootstrap.min.css">
+	<link rel="stylesheet" href="codemirror.css">
+	<title>Nile Node</title>
+</head>
+<body>
+	<div id="app">
+		<div class="container">
+			<div class="row">
+				<div v-if="logged" class="col-md-12 text-center">
+					This is the node called {{information.name}}! <button @click="logout" class="btn btn-primary">LOGOUT</button>
+				</div>
+				<div v-if="!logged" class="col-md-3 offset-md-2 text-center">
+					<div class="form-group">
+						<label for="name">Name</label>
+						<input v-model="information.name" type="text" class="form-control" id="name" placeholder="Name">
+						<label for="components">Components <span class="badge badge-danger">{{components_error}}</span></label>
+						<textarea v-model="componentsString" class="form-control" id="components"></textarea>
+						<label for="actions">Actions <span class="badge badge-danger">{{actions_error}}</span></label>
+						<textarea v-model="actionsString" class="form-control" id="actions"></textarea>
+					</div>
+					<button @click="register" type="submit" class="btn btn-primary">REGISTER</button>
+				</div>
+				<div v-if="!logged" class="col-md-3 offset-md-1 text-center">
+					<div class="form-group">
+						<div v-if="login_error !== ''">{{login_error}}<br></div>
+						<label for="token">Token</label>
+						<input v-model="token" type="text" class="form-control" id="token" placeholder="Token">
+					</div>
+					<button @click="login" type="submit" class="btn btn-primary">LOGIN</button>
+				</div>
+			</div>
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<h1>Actions</h1>
+				</div>
+				<div class="col-md-6" v-for="(actionText, actionName) in actions">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title">{{actionName}}</h5>
+						</div>
+						<ul class="list-group list-group-flush">
+							<li class="list-group-item">
+								<codemirror :value="actionText" @input="updateAction(actionName, $event)" :options="cmOptions"></codemirror>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<h1>Requests</h1>
+				</div>
+				<div class="col-md-4" v-for="request in requests">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title">{{request.content.content.action}}</h5>
+						</div>
+						<ul class="list-group list-group-flush">
+							<li class="list-group-item"><b>Sender: </b>{{request.content.sender}}</li>
+							<li class="list-group-item"><b>Parameters: </b>{{request.content.content.parameters}}</li>
+						</ul>
+						<div class="card-body">
+							<h4 v-if="!request.replied"><span class="badge badge-warning">PROCESSING</span></h4>
+							<h4 v-if="request.replied"><span class="badge badge-success">REPLIED</span></h4>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="./vue.js"></script>
+	<script src="./socket.io.js"></script>
+	<script src="./ipfs.min.js"></script>
+	<script src="./main.js"></script>
+	<script src="./codemirror.js"></script>
+	<script src="./vue-codemirror.js"></script>
+	<script src="./codemirror_javascript.js"></script>
+	<script>
+		let node = null
+		Vue.use(window.VueCodemirror)
+		var app = new Vue({
+			el: '#app',
+			data: {
+				logged: false,
+				token: "",
+				information: {
+					name: ""
+				},
+				components: [],
+				actions: {},
+				queue: [],
+				components_error: "",
+				actions_error: "",
+				login_error: "",
+				editors: {},
+				cmOptions: {
+					mode: "javascript",
+					lineNumbers: true,
+				},
+				requests: []
+			},
+			computed: {
+				componentsString: {
+					get() {
+						try {
+							return JSON.stringify(this.components)
+						} catch (e){
+							this.components_error = "syntax not valid"
+						}
+					},
+					set (componentsString) {
+						try {
+							this.components = JSON.parse(componentsString)
+						} catch (e){
+							this.components_error = "syntax not valid"
+						}
+					}
+				},
+				actionsString: {
+					get() {
+						try {
+							return JSON.stringify(this.actions)
+						} catch (e){
+							this.actions_error = "syntax not valid"
+						}
+					},
+					set (actionsString) {
+						try {
+							this.actions = JSON.parse(actionsString)
+							node.actions = this.actions
+						} catch (e){
+							this.actions_error = "syntax not valid"
+						}
+					}
+				}
+			},
+			methods: {
+				login() {
+					if(this.token) {
+						localStorage.setItem('token', app.token);
+						node.token = this.token
+						node.login()
+					}
+				},
+				register() {
+					if(this.information) {
+						node.information = this.information
+						node.components = this.components
+						node.actions = this.actions
+						node.register()
+					}
+				},
+				logout() {
+					this.logged = false
+					this.actionsString = "{}"
+					this.componentsString = "[]"
+					node.token = ""
+					localStorage.setItem('token', '')
+					socket.disconnect()
+					socket.connect("http://localhost:3334", {'force new connection': true})
+				},
+				updateAction(actionName, actionText) {
+					node.actions[actionName] = actionText
+					this.actions = node.actions
+				}
+			}
+		})
+		const socket = io("http://localhost:3334")
+		const ipfs = new window.Ipfs({
+			config: {
+				Addresses: {
+					Swarm: ['/ip4/0.0.0.0/tcp/0'],
+				},
+			}
+		})
+		socket.on('connect', () => {
+			ipfs.on('ready', () => {
+				node = new Node(socket, ipfs)
+				let token = localStorage.getItem('token')
+				if(token != '') {
+					node.token = token
+					node.login()
+				}
+				node.on('registered', r => {
+					app.token = r.token
+					app.logged = true
+					console.log('registered', r)
+				})
+				node.on('logged', info => {
+					app.components = info.components
+					app.actions = info.actions
+					app.logged = true
+					console.log('logged', info)
+				})
+				node.on('loginFailed', () => {
+					console.log("Login failed!")
+					//app.login_error = r.msg
+				})
+				node.on('requestReceived', r => {
+					app.requests.push(r)
+				})
+				node.on('requestReplied', r => {
+					app.requests.filter(v => {
+						if (v.request_id === r.request_id) {
+							v.replied = true
+						}
+						return v
+					})
+					app.$forceUpdate()
+				})
+			})
+		})
+	</script>
+</body>
+</html>

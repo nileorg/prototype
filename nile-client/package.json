@@ -1,0 +1,28 @@
+{
+  "name": "nile-client",
+  "version": "1.0.0",
+  "description": "The client is an application that offers the possibility to list and manage nodes and call the nodes actions",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nileorg/nile-client.git"
+  },
+  "author": "Marco Castignoli <marco@castignoli.it> (https://castignoli.it/)",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nileorg/nile-client/issues"
+  },
+  "homepage": "https://github.com/nileorg/nile-client#readme",
+  "dependencies": {
+    "ipfs": "^0.31.7",
+    "socket.io-client": "^2.1.1"
+  },
+  "standard": {
+    "ignore": [
+      "**/*.min.js"
+    ]
+  }
+}

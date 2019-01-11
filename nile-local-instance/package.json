@@ -1,0 +1,25 @@
+{
+  "name": "nile-local-instance",
+  "version": "1.0.0",
+  "description": "The local instance is the director for all the local nodes.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nileorg/nile-local-instance.git"
+  },
+  "author": "Marco Castignoli <marco@castignoli.it> (https://castignoli.it/)",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nileorg/nile-local-instance/issues"
+  },
+  "homepage": "https://github.com/nileorg/nile-local-instance#readme",
+  "dependencies": {
+    "ipfs": "^0.32.0",
+    "randomstring": "^1.1.5",
+    "socket.io": "^2.1.1",
+    "sqlite3": "^4.0.2"
+  }
+}

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<link rel="stylesheet" href="./bootstrap.min.css">
+	<link rel="stylesheet" href="./custom.css">
+	<title>Node Client</title>
+</head>
+<body>
+	<div id="app">
+		<div class="container">
+			<div class="row">
+				<div v-if="logged" class="col-md-12 text-center">
+					Welcome, {{information.name}}! <button @click="logout" class="btn btn-primary">LOGOUT</button>
+				</div>
+				<div v-if="!logged" class="col-md-3 offset-md-2 text-center">
+					<div class="form-group">
+						<label for="name">Name</label>
+						<input v-model="information.name" type="text" class="form-control" id="name" placeholder="Name">
+					</div>
+					<button @click="register" type="submit" class="btn btn-primary">REGISTER</button>
+				</div>
+				<div v-if="!logged" class="col-md-3 offset-md-1 text-center">
+					<div class="form-group">
+						<div v-if="login_error !== ''">{{login_error}}<br></div>
+						<label for="token">Token</label>
+						<input v-model="token" type="text" class="form-control" id="token" placeholder="Token">
+					</div>
+					<button @click="login" type="submit" class="btn btn-primary">LOGIN</button>
+				</div>
+			</div>
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<h1>Queue</h1>
+				</div>
+				<div class="col-md-3" v-for="request in queue">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title">{{request.queue_id}}</h5>
+						</div>
+						<ul class="list-group list-group-flush">
+								<li class="list-group-item"><b>Sender: </b>{{request.sender}}</li>
+							<li class="list-group-item"><b>Content: </b>{{request.content}}</li>
+						</ul>
+						<div class="card-body">
+							<button class="btn btn-primary" @click="processQueueRequest(request)">PROCESS</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<h1>Nodes</h1>
+				</div>
+				<div class="col-md-3" v-for="node in nodeList">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title">{{node.node_id}} - {{node.information.name}} <span v-if="node.online" class="badge badge-success">ONLINE</span></h5>
+							<p class="card-text">Located in {{node.information.location}}</p>
+						</div>
+						<ul class="list-group list-group-flush">
+							<li class="list-group-item"><b>IPFS HASH</b><br><input readonly class="form-control" v-model="node.ipfs_hash"></li>
+							<li class="list-group-item"><button class="btn btn-primary" @click="loadNode(node.node_id)">LOAD NODE</button><br></li>
+							<li class="list-group-item"><b>DATA</b><br>{{node.data}}</li>
+						</ul>
+						<div class="card-body">
+							<b>COMPONENTS</b>
+							<div v-for="component in node.components">
+								<hr>
+								<span v-if="component.type=='button' && !(node.online || logged)">If the node is offline, you can queue requests only if you're logged!<br><br></span>
+								<button :disabled="!(node.online || logged)" class="btn btn-primary" v-if="component.type=='button'" @click="request(node, component.action, component.parameters)">{{component.label}}</button>
+								<div v-if="component.type=='output' && node.data">
+									{{node.data[component.key]}}
+								</div>
+								<input class="form-control" type="text" v-if="component.type=='text'" v-model="node.data[component.key]">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="./vue.min.js"></script>
+	<script src="./socket.io.min.js"></script>
+	<script src="./ipfs.min.js"></script>
+	<script src="./main.min.js"></script>
+	<script>
+		let client = null
+		var app = new Vue({
+			el: '#app',
+			data: {
+				nodeList: [],
+				logged: false,
+				token: "",
+				information: {
+					name: ""
+				},
+				queue: [],
+				login_error: ""
+			},
+			methods: {
+				loadNode(node_id) {
+					client.loadNode(node_id)
+				},
+				call(node, action, parameters) {
+					let call_parameters = {}
+					parameters.forEach(parameter=>{
+						call_parameters[parameter] = node.data[parameter]
+					})
+					client.call(node.ws_id, action, call_parameters)
+				},
+				addQueue(node, action, parameters) {
+					let call_parameters = {}
+					parameters.forEach(parameter=>{
+						call_parameters[parameter] = node.data[parameter]
+					})
+					client.addQueue(node.node_id, action, call_parameters)
+				},
+				request(node, action, parameters) {
+					if(node.online) {
+						this.call(node, action, parameters)
+					} else {
+						this.addQueue(node, action, parameters)
+					}
+				},
+				login() {
+					if(this.token) {
+						localStorage.setItem('token', app.token);
+						client.login(this.token)
+					}
+				},
+				register() {
+					if(this.information) {
+						client.register(this.information)
+					}
+				},
+				processQueueRequest(request) {
+					client.processQueueRequest(request)
+				},
+				logout() {
+					this.logged = false
+					client.token = ""
+					localStorage.setItem('token', '')
+					socket.disconnect()
+					socket.connect("http://localhost:3334", {'force new connection': true})
+				}
+			}
+		})
+		const socket = io("http://localhost:3334")
+		const ipfs = new window.Ipfs({
+			config: {
+				Addresses: {
+					Swarm: ['/ip4/0.0.0.0/tcp/0'],
+				},
+			}
+		})
+		socket.on('connect', () => {
+			ipfs.on('ready', () => {
+				fetch('http://localhost:3334')
+				.then((response)=>response.text())
+				.then(function(ipfs_hash) {
+					client = new Client(socket, ipfs, ipfs_hash)
+					client.on("initialized", (nodeList) => {
+						console.log("Node list initialized!")
+						let token = localStorage.getItem('token')
+						if(token) {
+							client.login(token)
+						}
+					})
+					client.on("nodeListUpdated", (nodeList) => {
+						nodeList = Object.values(nodeList)
+						app.nodeList = nodeList[0]
+					})
+					client.on('response', r => {
+						console.log(r)
+					})
+					client.on('registered', r => {
+						app.token = r.token
+						app.logged = true
+						console.log('registered', r)
+					})
+					client.on('logged', r => {
+						app.information = r.information
+						app.queue = r.queue
+						app.logged = true
+						console.log('logged', r)
+					})
+					client.on('queueUpdated', r => {
+						app.queue = r.queue
+					})
+					client.on('loginFailed', r => {
+						app.login_error = r.msg
+					})
+					client.on('ipnsUpdated', r => {
+						client.ipfs_hash = r.ipfs
+						client.init()
+					})
+				})
+			})
+		})
+	</script>
+</body>
+</html>

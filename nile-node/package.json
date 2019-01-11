@@ -1,0 +1,23 @@
+{
+  "name": "nile-node",
+  "version": "1.0.0",
+  "description": "The node is the basic component of Nile, used to offer services through standard components.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nileorg/nile-node.git"
+  },
+  "author": "Marco Castignoli <marco@castignoli.it> (https://castignoli.it/)",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nileorg/nile-node/issues"
+  },
+  "homepage": "https://github.com/nileorg/nile-node#readme",
+  "dependencies": {
+    "ipfs": "^0.31.7",
+    "socket.io-client": "^2.1.1"
+  }
+}

@@ -1,0 +1,5 @@
+package-lock.json
+node_modules/
+mysqlConfig.js
+instance1
+instance.db
